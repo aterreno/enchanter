@@ -83,9 +83,9 @@
                           (get-in request [:params :size] "1000")
                           (get-in request [:params :mean] "0")
                           (get-in request [:params :sd] "1"))))
-
 (def app
   (handler/site enchanter-routes))
 
-(defn -main [& args]
-  (run-jetty enchanter-routes {:port 8080}))
+(defn -main [& [port]]
+  (let [port (Integer. (or port (System/getenv "PORT")))]
+    (run-jetty #'app {:port port})))
