@@ -2,10 +2,12 @@
   (:gen-class)
   (:use [compojure.core]
         [hiccup.core]
+        [ring.middleware.keyword-params]
         [hiccup.form]
         [ring.adapter.jetty]
         [incanter core stats charts])
-  (:require [compojure.route :as route])
+  (:require [compojure.route :as route]
+            [compojure.handler :as handler])
   (:import (java.io ByteArrayOutputStream
                     ByteArrayInputStream)))
 
@@ -61,22 +63,14 @@
      :headers {"Content-Type" "image/png"}}))
 
 (defroutes enchanter-routes
-  (GET "/" {:keys [headers params body] :as request}
-       (str "<h1>Hello World</h1>" request))
-
-  (GET "/sample-normal" {:keys [headers params body] :as request}
-       (println request)
-       (println (:params request))
+  (GET "/sample-normal" request []
        (gen-samp-hist-png request
-                          (params :size)
-                          (params :mean)
-                          (params :sd))))
+                          (-> request :params :size)
+                          (-> request :params :mean)
+                          (-> request :params :sd))))
 
-(def handler
-  (-> enchanter-routes))
-
-(defn start []
-  (run-jetty enchanter-routes {:port 8080}))
+(def app
+  (handler/site enchanter-routes))
 
 (defn -main [& args]
-  (start))
+  (run-jetty enchanter-routes {:port 8080}))
