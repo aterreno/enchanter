@@ -5,11 +5,35 @@
         [ring.middleware.keyword-params]
         [hiccup.form]
         [ring.adapter.jetty]
-        [incanter core stats charts])
+        [incanter core stats charts datasets])
   (:require [compojure.route :as route]
             [compojure.handler :as handler])
   (:import (java.io ByteArrayOutputStream
                     ByteArrayInputStream)))
+
+(def data (to-matrix (get-dataset :us-arrests)))
+(def assault (sel data :cols 2))
+(def urban-pop (sel data :cols 3))
+
+(def permuted-assault (sample-permutations 5000 assault))
+(def permuted-urban-pop (sample-permutations 5000 urban-pop))
+
+(def permuted-corrs (map correlation permuted-assault permuted-urban-pop))
+
+
+(defn to-png [chart]
+  (let [out-stream (ByteArrayOutputStream.)
+        in-stream (do
+                    (save chart out-stream)
+                    (ByteArrayInputStream.
+                     (.toByteArray out-stream)))]
+    in-stream))
+
+(defn whatever [request]
+  {:status 200
+   :body in-stream
+   :headers {"Content-Type" "image/png"}}
+  (to-png (histogram permuted-corrs)))
 
 (defn html-doc
   [title & body]
@@ -35,42 +59,30 @@
 
 (defn gen-samp-hist-png
   [request size-str mean-str sd-str]
-  (let [size (if (nil? size-str)
-               1000
-               (Integer/parseInt size-str))
-        m (if (nil? mean-str)
-            0
-            (Double/parseDouble mean-str))
-        s (if (nil? sd-str)
-            1
-            (Double/parseDouble sd-str))
-        samp (sample-normal size
-                            :mean m
-                            :sd s)
+  (let [size (Integer/parseInt size-str)
+        m (Double/parseDouble mean-str)
+        s (Double/parseDouble sd-str)
+        samp (sample-normal size :mean m :sd s)
         chart (histogram
                samp
                :title "Normal Sample"
                :x-label (str "sample-size = " size
                              ", mean = " m
-                             ", sd = " s))
-        out-stream (ByteArrayOutputStream.)
-        in-stream (do
-                    (save chart out-stream)
-                    (ByteArrayInputStream.
-                     (.toByteArray out-stream)))
-        ]
+                             ", sd = " s))]
     {:status 200
-     :body in-stream
+     :body (to-png chart)
      :headers {"Content-Type" "image/png"}}))
 
 (defroutes enchanter-routes
   (GET "/" []
     (sample-form))
+  (GET "/whatever" request []
+       (whatever request))
   (GET "/sample-normal" request []
        (gen-samp-hist-png request
-                          (-> request :params :size)
-                          (-> request :params :mean)
-                          (-> request :params :sd))))
+                          (get-in request [:params :size] "1000")
+                          (get-in request [:params :mean] "0")
+                          (get-in request [:params :sd] "1"))))
 
 (def app
   (handler/site enchanter-routes))
