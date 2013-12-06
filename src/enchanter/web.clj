@@ -55,25 +55,22 @@
                     (save chart out-stream)
                     (ByteArrayInputStream.
                      (.toByteArray out-stream)))
-        header {:status 200
-                :headers {"Content-Type" "image/png"}}]
-    ))
+        ]
+    {:status 200
+     :body in-stream
+     :headers {"Content-Type" "image/png"}}))
 
-(comment
-  (compojure.http.response/update-response request
-                                           header
-                                           in-stream)
+(defroutes enchanter-routes
+  (GET "/" {:keys [headers params body] :as request}
+       (str "<h1>Hello World</h1>" request))
 
-  (GET "/sample-normal"
+  (GET "/sample-normal" {:keys [headers params body] :as request}
+       (println request)
+       (println (:params request))
        (gen-samp-hist-png request
                           (params :size)
                           (params :mean)
-                          (params :sd)))
-  )
-
-(defroutes enchanter-routes
-  (GET "/" [] "<h1>Hello World</h1>")
-  (route/not-found "<h1>Page not found</h1>"))
+                          (params :sd))))
 
 (def handler
   (-> enchanter-routes))
