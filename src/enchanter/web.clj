@@ -24,13 +24,14 @@
         "Generate a normal sample"]]]
      body]]))
 
-(def sample-form
-  (html-doc "sample-normal histogram"
+(defn sample-form []
+  {:status 200
+     :body (html-doc "sample-normal histogram"
             (form-to [:get "/sample-normal"]
                      "sample size: " (text-field {:size 4} :size)
                      "mean: " (text-field {:size 4} :mean)
                      "sd: " (text-field {:size 4} :sd)
-                     (submit-button "view"))))
+                     (submit-button "view")))})
 
 (defn gen-samp-hist-png
   [request size-str mean-str sd-str]
@@ -63,6 +64,8 @@
      :headers {"Content-Type" "image/png"}}))
 
 (defroutes enchanter-routes
+  (GET "/" []
+    (sample-form))
   (GET "/sample-normal" request []
        (gen-samp-hist-png request
                           (-> request :params :size)
