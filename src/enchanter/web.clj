@@ -5,21 +5,23 @@
         [ring.middleware.keyword-params]
         [hiccup.form]
         [ring.adapter.jetty]
-        [incanter core stats charts datasets])
+        [incanter core stats charts datasets io])
   (:require [compojure.route :as route]
             [compojure.handler :as handler])
   (:import (java.io ByteArrayOutputStream
                     ByteArrayInputStream)))
 
-(def data (to-matrix (get-dataset :us-arrests)))
-(def assault (sel data :cols 2))
-(def urban-pop (sel data :cols 3))
+(def data (read-dataset "data/listings.csv" :header true))
 
-(def permuted-assault (sample-permutations 5000 assault))
-(def permuted-urban-pop (sample-permutations 5000 urban-pop))
+(def sqfeet (sel data :cols :SquareFeet))
 
-(def permuted-corrs (map correlation permuted-assault permuted-urban-pop))
+(def bathrooms (sel data :cols :TotalBathrooms))
 
+(def corr (correlation (to-matrix data)))
+
+(def columnnames (:column-names data))
+
+(def price-column (sel corr :cols 14))
 
 (defn to-png [chart]
   (let [out-stream (ByteArrayOutputStream.)
@@ -29,11 +31,11 @@
                      (.toByteArray out-stream)))]
     in-stream))
 
-(defn whatever [request]
+(defn interesting [request]
   {:status 200
    :body in-stream
    :headers {"Content-Type" "image/png"}}
-  (to-png (histogram permuted-corrs)))
+  (to-png (bar-chart columnnames price-column :legend true :vertical false)))
 
 (defn html-doc
   [title & body]
@@ -76,8 +78,8 @@
 (defroutes enchanter-routes
   (GET "/" []
     (sample-form))
-  (GET "/whatever" request []
-       (whatever request))
+  (GET "/interesting" request []
+       (interesting request))
   (GET "/sample-normal" request []
        (gen-samp-hist-png request
                           (get-in request [:params :size] "1000")
