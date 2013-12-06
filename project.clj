@@ -10,4 +10,8 @@
                  [incanter "1.5.4"]
                  [hiccup "1.0.4"]
                  [ring/ring "1.2.1"]
-                 [compojure "1.1.6"]])
+                 [compojure "1.1.6"]
+                 [swingrepl "1.3.0"
+                  :exclusions [org.clojure/clojure
+                               org.clojure/clojure-contrib]]
+                 [jline/jline "2.11"]])
