@@ -75,5 +75,11 @@
   (GET "/" [] "<h1>Hello World</h1>")
   (route/not-found "<h1>Page not found</h1>"))
 
-(defn -main [& args]
+(def handler
+  (-> enchanter-routes))
+
+(defn start []
   (run-jetty enchanter-routes {:port 8080}))
+
+(defn -main [& args]
+  (start))

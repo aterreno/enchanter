@@ -4,6 +4,8 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :main enchanter.web
+  :plugins [[lein-ring "0.8.8"]]
+  :ring {:handler enchanter.web/handler}
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [incanter "1.5.4"]
                  [hiccup "1.0.4"]
